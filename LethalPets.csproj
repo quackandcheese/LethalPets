@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net46</TargetFramework>
+    <AssemblyName>LethalPets</AssemblyName>
+    <Description>My first plugin</Description>
+    <Version>1.0.0</Version>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.Core" Version="5.*" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
+    <PackageReference Include="LethalAPI.GameLibs" Version="45.1.0" />
+    <PackageReference Include="UnityEngine.Modules" Version="2022.3.9" IncludeAssets="compile" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="TerminalApi">
+      <HintPath>..\..\..\AppData\Roaming\Thunderstore Mod Manager\DataFolder\LethalCompany\profiles\Dev\BepInEx\plugins\NotAtomicBomb-TerminalApi\TerminalApi.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="if &quot;$(Username)&quot; == &quot;Quack&quot; copy &quot;$(TargetPath)&quot; &quot;C:\Users\Quack\Desktop\Lethal Company Mods\LethalCompany\Assets\Plugins&quot;&#xD;&#xA;if &quot;$(Username)&quot; == &quot;Quack&quot; copy &quot;$(TargetPath)&quot; &quot;C:\Users\Quack\AppData\Roaming\Thunderstore Mod Manager\DataFolder\LethalCompany\profiles\Dev\BepInEx\plugins&quot;" />
+  </Target>
+</Project>
