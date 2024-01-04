@@ -17,14 +17,15 @@ namespace LethalPets
 
         public static AssetBundle Bundle;
 
-        public static ConfigFile config;
+        public static ConfigFile configFile;
+        public static Config PetsConfig { get; internal set; }
 
         public static BepInEx.Logging.ManualLogSource logger;
         private void Awake()
         {
             Bundle = QuickLoadAssetBundle("lethalpets.assets");
             logger = Logger;
-            config = Config;
+            configFile = Config;
 
             Harmony harmony = new Harmony(ModGUID);
             harmony.PatchAll();
@@ -34,11 +35,13 @@ namespace LethalPets
             TerminalCommands.Create();
 
             RegisterPets();
+            PetsConfig = new Config(configFile);
         }
 
         public void RegisterPets()
         {
             PetManager.RegisterPet(Bundle.LoadAsset<PetDefinition>("Assets/LethalPets/Pets/Cat/CatDefinition.asset"));
+            PetManager.RegisterPet(Bundle.LoadAsset<PetDefinition>("Assets/LethalPets/Pets/EyelessPup/EyelessPupDefinition.asset"));
         }
 
 

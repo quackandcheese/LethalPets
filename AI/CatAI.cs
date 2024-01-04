@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Burst.Intrinsics;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -13,10 +14,12 @@ namespace LethalPets
 {
     public class CatAI : PetAI
     {
-        public float runningSpeed = 10;
-        public float walkingSpeed = 3.5f;
+        [SerializeField] private float runningSpeed = 10;
+        [SerializeField] private float walkingSpeed = 3.5f;
         private float targetSpeed;
         private float timeElapsed;
+
+        [SerializeField] private float speedTransitionTimeMultiplier = 8f;
 
         [Header("Sound")]
         public AudioClip[] meowSFX;
@@ -40,7 +43,7 @@ namespace LethalPets
         public override void DoAIInterval()
         {
             base.DoAIInterval();
-            if (!sitting)
+            if (CanMove())
                 SetMovingTowardsTargetPlayer(ownerPlayer);
             else
                 SetDestinationToPosition(transform.position);
@@ -61,15 +64,16 @@ namespace LethalPets
 
         public void OnCancelInteract(PlayerControllerB activatingPlayer)
         {
-            StopPurr();
+            StartCoroutine(StopPurr());
         }
 
         private void StartPurr()
         {
             purring = true;
             int randomSoundIndex = UnityEngine.Random.Range(0, reactionToPetSFX.Length);
-            MakePetNoiseServerRpc(randomSoundIndex);
-        }
+            if (!creatureVoice.isPlaying)
+                MakePetNoiseServerRpc(randomSoundIndex);
+        } 
 
         private IEnumerator StopPurr()
         {
@@ -79,8 +83,9 @@ namespace LethalPets
 
                 creatureVoice.Stop();
                 purring = false;
+                yield return null;
             }
-            yield return null;
+            yield break;
         }
 
         public void MeowRandomly()
@@ -119,34 +124,22 @@ namespace LethalPets
             //Mathf.Lerp(agent.acceleration, walkingSpeed, t);
             if (agent.speed != targetSpeed)
             {
-                agent.speed = Lerp(agent.speed, targetSpeed, 1f);
+                float nextSpeed = Mathf.Lerp(agent.speed, targetSpeed, speedTransitionTimeMultiplier * Time.deltaTime);
+                agent.speed = nextSpeed;
             }
 
-            if (!sitting)
+            if (CanMove())
             {
                 creatureAnimator.SetFloat("Speed", Vector3.Magnitude(agent.velocity) / runningSpeed);
             }
         }
 
-        float Lerp(float startValue, float endValue, float lerpDuration)
+        public override bool CanFollowOwnerIntoFacility()
         {
-            float valueToLerp;
-
-            if (timeElapsed < lerpDuration)
-            {
-                valueToLerp = Mathf.Lerp(startValue, endValue, timeElapsed / lerpDuration);
-                timeElapsed += Time.deltaTime;
-            }
-            else
-            {
-                valueToLerp = endValue;
-                timeElapsed = 0;
-            }
-
-            return valueToLerp;
+            return !sitting;
         }
 
-        public override bool CanFollowOwnerIntoFacility()
+        public override bool CanMove()
         {
             return !sitting;
         }

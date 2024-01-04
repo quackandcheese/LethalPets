@@ -16,7 +16,7 @@ namespace LethalPets
         public static void RegisterPet(PetDefinition petDefinition)
         {
             petDefinitions.Add(petDefinition);
-            TerminalCommands.CreatePetCommand(petDefinition);
+            //TerminalCommands.CreatePetCommand(petDefinition);
         }
 
 

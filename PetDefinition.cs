@@ -12,9 +12,11 @@ namespace LethalPets
     {
         public string petName;
         public string species;
-        public string description;
+        [TextArea] public string description;
         public int price;
         public GameObject prefab;
+        [HideInInspector]
+        public string SimpleName => petName.Trim().ToLower();
         //public List<string> terminalWords = new List<string>();
     }
 }

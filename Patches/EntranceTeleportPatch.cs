@@ -22,8 +22,9 @@ namespace LethalPets
                 {
                     if (petAI.ownerPlayer == localPlayer && petAI.CanFollowOwnerIntoFacility())
                     {
-                        petAI.agent.Warp(__instance.exitPoint.position);
+                        petAI.GetAgent().Warp(__instance.exitPoint.position);
                         gameObject.transform.eulerAngles = new Vector3(0, __instance.exitPoint.eulerAngles.y, 0);
+                        petAI.isInsideFactory = __instance.isEntranceToBuilding;
                     }
                 }
             }

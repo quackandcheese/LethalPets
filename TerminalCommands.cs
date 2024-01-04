@@ -33,6 +33,9 @@ namespace LethalPets
 
             foreach (PetDefinition petEntry in PetManager.petDefinitions)
             {
+                if (!Config.Instance.PetIsEnabled(petEntry))
+                    continue;
+
                 displayText += $"* {petEntry.petName}  //  Price: ${petEntry.price}\n";
             }
 
@@ -41,7 +44,7 @@ namespace LethalPets
             return displayText;
         }
 
-        public static void CreatePetCommand(PetDefinition petDef)
+        /*public static void CreatePetCommand(PetDefinition petDef)
         {
             string simpleName = petDef.petName.ToLower().Trim();
             TerminalNode petNode = CreateTerminalNode($"Do you really want to buy {petDef.petName}?", true, simpleName);
@@ -51,7 +54,7 @@ namespace LethalPets
 
             AddTerminalKeyword(petNameKeyword);
             UpdateKeyword(adoptKeyword);
-        }
+        }*/
     }
 
     [HarmonyPatch(typeof(Terminal), nameof(Terminal.RunTerminalEvents))]
@@ -104,10 +107,22 @@ namespace LethalPets
         {
             foreach(PetDefinition petDef in PetManager.petDefinitions)
             {
-                string simpleName = petDef.petName.ToLower().Trim();
+                if (!Config.Instance.PetIsEnabled(petDef))
+                    continue;
+
+                // COMMAND
+                TerminalNode petNode = CreateTerminalNode($"Do you really want to buy {petDef.petName}?", true, petDef.SimpleName);
+                TerminalKeyword petNameKeyword = CreateTerminalKeyword(petDef.SimpleName);
+                TerminalCommands.adoptKeyword = TerminalCommands.adoptKeyword.AddCompatibleNoun(petNameKeyword, petNode);
+                petNameKeyword.defaultVerb = TerminalCommands.adoptKeyword;
+
+                AddTerminalKeyword(petNameKeyword);
+                UpdateKeyword(TerminalCommands.adoptKeyword);
+
+                // INFO
                 string infoText = $"{petDef.petName}\n\nSpecies: {petDef.species}\n\nDescription: {petDef.description}\n\nPrice: ${petDef.price}\n\n";
                 TerminalNode infoNode = CreateTerminalNode(infoText, true);
-                AddCompatibleNoun("info", simpleName, infoNode);
+                AddCompatibleNoun("info", petDef.SimpleName, infoNode);
             }
         }
     }

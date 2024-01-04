@@ -13,31 +13,27 @@ namespace LethalPets
 {
     public abstract class PetAI : NetworkBehaviour
     {
-        public NavMeshAgent agent;
-        public Animator creatureAnimator;
-        public Rigidbody mainRigidBody;
-        public Collider mainCollider;
+        [SerializeField] protected NavMeshAgent agent;
+        [SerializeField] protected Animator creatureAnimator;
+        [SerializeField] protected Rigidbody mainRigidBody;
+        [SerializeField] protected Collider mainCollider;
 
-        [Header("Sound")]
-        public AudioSource creatureSFX;
-        public AudioSource creatureVoice;
-        public AudioClip[] reactionToPetSFX;
+        [SerializeField] protected AudioSource creatureSFX;
+        [SerializeField] protected AudioSource creatureVoice;
+        [SerializeField] protected AudioClip[] reactionToPetSFX;
 
         [Header("Settings")]
-        public bool forceNoCollisionWithPlayers = false;
-        public bool forceDiageticAudio = true;
+        [SerializeField] private bool forceNoCollisionWithPlayers = false;
+        [SerializeField] private bool forceDiageticAudio = true;
 
-        [HideInInspector]
-        public NavMeshPath path;
-        private Vector3 destination;
+        protected NavMeshPath path;
+        protected Vector3 destination;
 
-        [HideInInspector]
-        public bool parentedToShip = false;
+        private bool parentedToShip = false;
 
         [HideInInspector]
         public PlayerControllerB ownerPlayer;
-        [HideInInspector]
-        public PlayerControllerB targetPlayer;
+        protected PlayerControllerB targetPlayer;
 
 
         protected bool movingTowardsTargetPlayer;
@@ -52,12 +48,16 @@ namespace LethalPets
         protected AudioMixerGroup defaultCreatureVoiceAudioMixerGroup;
         protected AudioMixerGroup defaultCreatureSFXAudioMixerGroup;
 
+        public bool isInsideFactory;
+        public bool isInsideShip;
+        public bool isOnShip;
+
         public virtual void Start()
         {
             try
             {
                 this.agent = base.gameObject.GetComponentInChildren<NavMeshAgent>();
-                Debug.Log("Initializing pet animator");
+                Debug.Log("Initializing pet variables");
                 if (this.creatureAnimator == null)
                 {
                     this.creatureAnimator = base.gameObject.GetComponentInChildren<Animator>();
@@ -66,80 +66,67 @@ namespace LethalPets
                 {
                     this.mainRigidBody = gameObject.GetComponentInChildren<Rigidbody>();
                 }
-                if (this.defaultCreatureVoiceAudioMixerGroup == null)
+                if (this.defaultCreatureVoiceAudioMixerGroup == null && creatureVoice)
                 {
-                    if (creatureVoice)
-                        this.defaultCreatureVoiceAudioMixerGroup = creatureVoice.outputAudioMixerGroup;
+                    this.defaultCreatureVoiceAudioMixerGroup = creatureVoice.outputAudioMixerGroup;
                 }
-                if (this.defaultCreatureSFXAudioMixerGroup == null)
+                if (this.defaultCreatureSFXAudioMixerGroup == null && creatureSFX)
                 {
-                    if (creatureSFX)
-                        this.defaultCreatureSFXAudioMixerGroup = creatureSFX.outputAudioMixerGroup;
+                    this.defaultCreatureSFXAudioMixerGroup = creatureSFX.outputAudioMixerGroup;
                 }
 
                 if (mainRigidBody != null)
                 {
                     defaultRigidbodyExcludeLayers = mainRigidBody.excludeLayers;
                 }
-                /*if (this.enemyType.isOutsideEnemy)
-                {
-                    this.allAINodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
-                    if (GameNetworkManager.Instance.localPlayerController != null)
-                    {
-                        this.EnableEnemyMesh(!StartOfRound.Instance.hangarDoorsClosed || !GameNetworkManager.Instance.localPlayerController.isInHangarShipRoom, false);
-                    }
-                }
-                else
-                {
-                    this.allAINodes = GameObject.FindGameObjectsWithTag("AINode");
-                }*/
+
                 this.path = new NavMeshPath();
 
                 UpdateSettings();
             }
             catch (Exception arg)
             {
-                Debug.LogError($"Error when initializing enemy variables for {base.gameObject.name} : {arg}");
+                Debug.LogError($"Error when initializing pet variables for {base.gameObject.name} : {arg}");
             }
         }
 
         public virtual void Update()
         {
-            this.SetClientCalculatingAI(true);
+            SetClientCalculatingAI(true);
 
-            if (this.movingTowardsTargetPlayer && this.targetPlayer != null)
+            if (movingTowardsTargetPlayer && targetPlayer != null)
             {
-                if (this.setDestinationToPlayerInterval <= 0f)
+                if (setDestinationToPlayerInterval <= 0f)
                 {
-                    this.setDestinationToPlayerInterval = 0.25f;
-                    this.destination = RoundManager.Instance.GetNavMeshPosition(this.targetPlayer.transform.position, RoundManager.Instance.navHit, 2.7f, -1);
+                    setDestinationToPlayerInterval = 0.25f;
+                    destination = RoundManager.Instance.GetNavMeshPosition(targetPlayer.transform.position, RoundManager.Instance.navHit, 2.7f, -1);
                 }
                 else
                 {
-                    this.destination = new Vector3(this.targetPlayer.transform.position.x, this.destination.y, this.targetPlayer.transform.position.z);
-                    this.setDestinationToPlayerInterval -= Time.deltaTime;
+                    destination = new Vector3(targetPlayer.transform.position.x, destination.y, targetPlayer.transform.position.z);
+                    setDestinationToPlayerInterval -= Time.deltaTime;
                 }
-                if (this.addPlayerVelocityToDestination > 0f)
+                if (addPlayerVelocityToDestination > 0f)
                 {
-                    if (this.targetPlayer == GameNetworkManager.Instance.localPlayerController)
+                    if (targetPlayer == GameNetworkManager.Instance.localPlayerController)
                     {
-                        this.destination += Vector3.Normalize(this.targetPlayer.thisController.velocity * 100f) * this.addPlayerVelocityToDestination;
+                        destination += Vector3.Normalize(targetPlayer.thisController.velocity * 100f) * addPlayerVelocityToDestination;
                     }
-                    else if (this.targetPlayer.timeSincePlayerMoving < 0.25f)
+                    else if (targetPlayer.timeSincePlayerMoving < 0.25f)
                     {
-                        this.destination += Vector3.Normalize((this.targetPlayer.serverPlayerPosition - this.targetPlayer.oldPlayerPosition) * 100f) * this.addPlayerVelocityToDestination;
+                        destination += Vector3.Normalize((targetPlayer.serverPlayerPosition - targetPlayer.oldPlayerPosition) * 100f) * addPlayerVelocityToDestination;
                     }
                 }
             }
 
-            if (this.updateDestinationInterval >= 0f)
+            if (updateDestinationInterval >= 0f)
             {
-                this.updateDestinationInterval -= Time.deltaTime;
+                updateDestinationInterval -= Time.deltaTime;
             }
             else
             {
-                this.DoAIInterval();
-                this.updateDestinationInterval = this.AIIntervalTime;
+                DoAIInterval();
+                updateDestinationInterval = AIIntervalTime;
             }
         }
 
@@ -187,7 +174,7 @@ namespace LethalPets
 
         private void LateUpdate()
         {
-            if (StartOfRound.Instance.shipBounds.bounds.Contains(transform.position))
+/*            if (StartOfRound.Instance.shipBounds.bounds.Contains(transform.position))
             {
                 transform.SetParent(StartOfRound.Instance.elevatorTransform);
                 parentedToShip = true;
@@ -199,6 +186,24 @@ namespace LethalPets
             {
                 parentedToShip = false;
                 transform.SetParent(null, true);
+            }*/
+
+            if (isOnShip && !StartOfRound.Instance.shipBounds.bounds.Contains(transform.position))
+            {
+                isOnShip = false;
+                isInsideShip = false;
+            }
+            else if (!isOnShip && StartOfRound.Instance.shipBounds.bounds.Contains(transform.position))
+            {
+                isOnShip = true;
+                if (StartOfRound.Instance.shipInnerRoomBounds.bounds.Contains(transform.position))
+                {
+                    isInsideShip = true;
+                }
+                else
+                {
+                    isInsideShip = false;
+                }
             }
         }
 
@@ -231,14 +236,14 @@ namespace LethalPets
 
         public void SetClientCalculatingAI(bool enable)
         {
-            this.agent.enabled = enable;
+            agent.enabled = enable;
         }
 
         public virtual void DoAIInterval()
         {
-            if (this.moveTowardsDestination)
+            if (moveTowardsDestination)
             {
-                this.agent.SetDestination(this.destination);
+                agent.SetDestination(destination);
             }
         }
 
@@ -273,6 +278,16 @@ namespace LethalPets
         public virtual bool CanFollowOwnerIntoFacility()
         {
             return true;
+        }
+
+        public virtual bool CanMove()
+        {
+            return true;
+        }
+
+        public NavMeshAgent GetAgent()
+        {
+            return agent;
         }
     }
 }

@@ -28,6 +28,6 @@
   </ItemGroup>
   
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="if &quot;$(Username)&quot; == &quot;Quack&quot; copy &quot;$(TargetPath)&quot; &quot;C:\Users\Quack\Desktop\Lethal Company Mods\LethalCompany\Assets\Plugins&quot;&#xD;&#xA;if &quot;$(Username)&quot; == &quot;Quack&quot; copy &quot;$(TargetPath)&quot; &quot;C:\Users\Quack\AppData\Roaming\Thunderstore Mod Manager\DataFolder\LethalCompany\profiles\Dev\BepInEx\plugins&quot;" />
+    <Exec Command="if &quot;$(Username)&quot; == &quot;Quack&quot; copy &quot;$(TargetPath)&quot; &quot;C:\Users\Quack\Desktop\LethalCompanyMods\LethalCompany\Assets\Plugins&quot;&#xD;&#xA;if &quot;$(Username)&quot; == &quot;Quack&quot; copy &quot;$(TargetPath)&quot; &quot;C:\Users\Quack\AppData\Roaming\Thunderstore Mod Manager\DataFolder\LethalCompany\profiles\Dev\BepInEx\plugins&quot;&#xD;&#xA;if &quot;$(Username)&quot; == &quot;Quack&quot; copy &quot;C:\Users\Quack\Desktop\LethalCompanyMods\LethalCompany\Assets\AssetBundles\lethalpets.assets&quot; &quot;C:\Users\Quack\AppData\Roaming\Thunderstore Mod Manager\DataFolder\LethalCompany\profiles\Dev\BepInEx\plugins&quot;" />
   </Target>
 </Project>
